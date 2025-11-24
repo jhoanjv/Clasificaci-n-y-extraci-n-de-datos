@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Entorno virtual
+venv/
+env/
+.venv/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Archivos sensibles
+*.env
+.env
+.env.*
+
+# Archivos de configuración privados
+*token*.json
+*service-account*.json
+
+# Archivos grandes / temporales
+*.log
+.DS_Store
