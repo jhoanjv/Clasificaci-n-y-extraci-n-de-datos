@@ -7,6 +7,7 @@ img = Image.open("icon.png")
 
 if "documentos" not in st.session_state:
     st.session_state.documentos = []
+        
 
 if "analizando" not in st.session_state:
     st.session_state.analizando = False
@@ -69,7 +70,7 @@ def RenderDocumentos(nombreExpander,tipoDocumento):
     with st.expander(nombreExpander,expanded = True):
         for documento in st.session_state.documentos:
             if documento["type"] != tipoDocumento:
-                return
+                continue
             with st.expander(f"Documento - {documento["identificador"]}"):
                 st.markdown(documento["datos_importantes"])
 
@@ -100,7 +101,8 @@ def main():
     RenderDocumentos("Cédulas","cedula")
     RenderDocumentos("Actas de Seguros","acta_de_seguros")
     RenderDocumentos("Contratos","contrato")
-    st.write(st.session_state.documentos)
+    RenderDocumentos("Otros","NO_VALIDO")
+
 
 if __name__ == '__main__':
     main()
