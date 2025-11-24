@@ -22,7 +22,7 @@ def PreguntarGemini(archivo):
     model = genai.GenerativeModel("gemini-2.5-flash")
     
     prompt = """
-Eres un sistema experto en clasificación y extracción estructurada de información.
+Eres un sistema experto en clasificación y extracción estructurada de información CLARA Y COMPLETA.
 INSTRUCCIONES:
 1. CLASIFICACIÓN ESTRICTA (GATEKEEPER):
 Analiza el contenido del documento. Debes clasificarlo EXCLUSIVAMENTE en una de estas categorías si cumple con las características típicas:
@@ -34,18 +34,32 @@ SI EL DOCUMENTO NO ENCAJA CLARAMENTE EN LAS 3 ANTERIORES (por ejemplo: es una ho
 2. EXTRACCIÓN Y FORMATO:
 Extrae la información relevante según la categoría y formatéala como una única cadena de texto en MARKDOWN (usa viñetas, negritas para los títulos de los campos, etc.). No uses null en el texto, simplemente omite el campo si no existe.
 Campos a buscar y formatear en el Markdown:
-- Si es CÉDULA: Nombre completo, Numero documento, Fecha nacimiento, lugar expedicion, fecha expedicion.
-- Si es ACTA DE SEGUROS: numero poliza, asegurado, aseguradora, fecha inicio, fecha fin, prima, tipo cobertura, valores asegurados.
+- Si es CÉDULA: Nombre completo, Numero documento, Fecha nacimiento, lugar expedicion, fecha expedicion, lugar de nacimiento.
+- Si es ACTA DE SEGUROS: numero poliza, asegurado, aseguradora, fecha inicio, fecha fin, tipo cobertura, valores asegurados.
 - Si es CONTRATO: partes involucradas, objeto contrato, fecha firma, vigencia, obligaciones principales, valor contrato, clausulas relevantes.
-- Si detectas cualquier otro dato crucial, agrégalo también al Markdown.
-3. SALIDA:
+3.Debes incluir un campo adicional llamado "Advertencias". 
+    1.Su valor debe ser:
+    -"OK" si no hay problemas, o
+    - Una LISTA con advertencias detectadas.
+    2. Valida solo lo esencial:
+    -Fechas incoherentes:** nacimiento > expedición, fechas futuras, fechas inválidas, fecha_fin < fecha_inicio.
+    -Campos faltantes o vacíos:** nombre, número de documento, número de póliza, partes del contrato, etc.
+    -Formato inválido:** números de documento incorrectos, valores monetarios sin cifras, fechas ilegibles.
+    -Contradicciones:** datos repetidos con valores distintos, información inconsistente dentro del documento.
+    -Errores de lectura (OCR):** texto incompleto, símbolos extraños, datos que no aparecen realmente.
+    3. Si hay advertencias →  
+    "Advertencias": ["...", "..."]
+    4. Si todo está bien →  
+    "Advertencias": "OK"
+4. SALIDA:
 Devuelve EXCLUSIVAMENTE un objeto JSON con la siguiente estructura exacta:
 {
   "type": "nombre_de_la_categoria",
-  "identificador": "Aqui va el numero documento, numero poliza o numero de contrato
-  "datos_importantes": "Aquí va el string con todo el contenido extraído formateado en Markdown"
+  "identificador": "Aqui va el numero documento, numero poliza o numero de contrato",
+  "datos_importantes": "Aquí va el string con todo el contenido extraído formateado en Markdown",
+  "Advertencias": "Aqui va una lista con los comentarios o adventencias sobre la calidad del dato extraido, alguna incoherencia o error que puedas encontrar en el documento, si todo esta bien solo pon OK",
 }
-4. RESTRICCIONES:
+5. RESTRICCIONES:
 - No incluyas texto fuera del JSON.
 - El valor de "datos_importantes" debe ser un string válido.
 """
@@ -73,6 +87,25 @@ def RenderDocumentos(nombreExpander,tipoDocumento):
                 continue
             with st.expander(f"Documento - {documento["identificador"]}"):
                 st.markdown(documento["datos_importantes"])
+                # Mostrar advertencias si existen
+                advertencias = documento.get("Advertencias")
+
+                st.markdown("---")  # Separador visual
+
+                st.subheader("Advertencias")
+
+                if isinstance(advertencias, list):
+                    for adv in advertencias:
+                        st.warning(adv)
+
+                elif isinstance(advertencias, str):
+                    if advertencias.upper() == "OK":
+                        st.success("Sin advertencias")
+                    else:
+                        st.warning(advertencias)
+
+                else:
+                    st.info("No se registraron advertencias.")
 
 def main():
     ConfigGemini()
@@ -102,6 +135,8 @@ def main():
     RenderDocumentos("Actas de Seguros","acta_de_seguros")
     RenderDocumentos("Contratos","contrato")
     RenderDocumentos("Otros","NO_VALIDO")
+
+    st.write(st.session_state.documentos)
 
 
 if __name__ == '__main__':
