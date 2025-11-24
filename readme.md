@@ -63,7 +63,4 @@ Cada documento aparece dentro de un **expander** mostrando los datos extraídos.
 ### 🔐 Manejo seguro de credenciales
 La API Key de Gemini se almacena en `.streamlit/secrets.toml`.
 
----
-
-## 📁 Estructura del proyecto
 
